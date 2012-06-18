@@ -20,38 +20,38 @@ a fast yet simple ORM (well, OM actually) that automates creation, indexing and 
 
 ###Example:
 
-    ```python
-    from patterns.object_store.objects import IndexedObject, KeySpec
-    from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
+```python
+from patterns.object_store.objects import IndexedObject, KeySpec
+from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
 
-    class User(IndexedObject):
+class User(IndexedObject):
 
 
-        #which fields should be saved to redis
-        _spec = ('id', 'name', 'email', 'pwhash', 'registrationDate', 'score')
+    #which fields should be saved to redis
+    _spec = ('id', 'name', 'email', 'pwhash', 'registrationDate', 'score')
 
-        #The keys for this object
-        _keySpec = KeySpec(
-            UnorderedKey(prefix='users',fields=('name',)),
-            OrderedNumericalKey(prefix='users', field='score')
-        )
+    #The keys for this object
+    _keySpec = KeySpec(
+        UnorderedKey(prefix='users',fields=('name',)),
+        OrderedNumericalKey(prefix='users', field='score')
+    )
 
-        def __init__(self, **kwargs):
-            IndexedObject.__init__(self, **kwargs)
-            self.registrationDate = int(kwargs.get('registrationDate', time.time()))
+    def __init__(self, **kwargs):
+        IndexedObject.__init__(self, **kwargs)
+        self.registrationDate = int(kwargs.get('registrationDate', time.time()))
 
-    #Creating a user
-    user = User(email = 'user@domain.com', name = 'John Doe', pwhash = 'eabc626ec26bc6ae6cb2', score = 100)
-    user.save()
+#Creating a user
+user = User(email = 'user@domain.com', name = 'John Doe', pwhash = 'eabc626ec26bc6ae6cb2', score = 100)
+user.save()
 
-    #loading by name key
-    users =  User.get(Condition({'name': 'John Doe'}))
+#loading by name key
+users =  User.get(Condition({'name': 'John Doe'}))
 
-    #loading by id:
-    users = User.loadObjects((1,))
+#loading by id:
+users = User.loadObjects((1,))
 
-    #See example/users_example for a more detailed exmample and some benchmarks
-    ```
+#See example/users_example for a more detailed exmample and some benchmarks
+```
 
 
 
@@ -66,18 +66,18 @@ It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not functi
 
 ###Example:
 
-    ```python
-    from patterns.bitmap_counter import BitmapCounter
+```python
+from patterns.bitmap_counter import BitmapCounter
 
-    #Daily unique users counter
-    counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
+#Daily unique users counter
+counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
 
-    #sampling current user
-    counter.add(3)
+#sampling current user
+counter.add(3)
 
-    #Getting the unique user count for today
-    counter.getCount((time.time(),), counter.RES_DAY)
-    ```
+#Getting the unique user count for today
+counter.getCount((time.time(),), counter.RES_DAY)
+```
 
 ## idgenerator
 
