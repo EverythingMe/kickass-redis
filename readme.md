@@ -143,3 +143,15 @@ To optimize performance, it reserves in local memory many ids when accessing red
 
 
 # Feel free to contribute more recipes...
+
+#Project TODO:
+
+1. Add unit tests for all objects
+
+2. Add setup.py script
+
+3. Add Unique Key
+
+4. Add Full Text Key
+
+
