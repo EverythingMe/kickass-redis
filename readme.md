@@ -64,17 +64,18 @@ It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not functi
 
 ###Example:
 
-    from patterns.bitmap_counter import BitmapCounter
+```python
+from patterns.bitmap_counter import BitmapCounter
 
-    #Daily unique users counter
-    counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
+#Daily unique users counter
+counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
 
-    #sampling current user
-    counter.add(3)
+#sampling current user
+counter.add(3)
 
-    #Getting the unique user count for today
-    counter.getCount((time.time(),), counter.RES_DAY)
-
+#Getting the unique user count for today
+counter.getCount((time.time(),), counter.RES_DAY)
+```
 
 ## idgenerator
 
