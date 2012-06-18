@@ -79,6 +79,41 @@ counter.add(3)
 counter.getCount((time.time(),), counter.RES_DAY)
 ```
 
+
+## LuaCall
+
+A convenience wrapper that allows you to edit, precache and call Lua scripts available in redis-2.6, as if they were native python functions.
+
+### Example:
+
+let mult.lua contain the code:
+
+```lua
+
+local val = ARGV[1]*ARGV[2]
+redis.call('set', KEYS[1], val)
+return redis.call('get', KEYS[1])
+
+```
+
+Running it from python:
+```python
+import redis
+from patterns.lua import LuaCall, LuaScriptError
+conn = redis.Redis()
+
+#Define the call, and make it runn on our connection
+mult = LuaCall(open('mult.lua'), conn)
+
+#Call it once:
+print "Result: %s" % mult(keys = ('foor',), args = (3,10))
+
+#call it again
+print "Result: %s" % mult(keys = ('foor2',), args = (5,20))
+
+```
+
+
 ## idgenerator
 
 
