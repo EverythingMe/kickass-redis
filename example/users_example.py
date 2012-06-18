@@ -33,20 +33,25 @@ import time
 import logging
 from hashlib import md5
 
+from patterns.object_store.objects import IndexedObject, KeySpec
+from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
+
 class User(IndexedObject):
 
+    #Used to salt paasswords
     __SALT = 'DFG3rg3egef92f29f2h9f7hAAA'
+
+    #which fields should be saved to redis
     _spec = ('id', 'name', 'email', 'pwhash', 'registrationDate', 'score')
 
+    #The keys for this object
     _keySpec = KeySpec(
-        UnorderedKey(prefix='users',fields=('email',)),
         UnorderedKey(prefix='users',fields=('name',)),
         OrderedNumericalKey(prefix='users', field='score')
     )
 
     def __init__(self, **kwargs):
         IndexedObject.__init__(self, **kwargs)
-
         self.registrationDate = int(kwargs.get('registrationDate', time.time()))
 
 
@@ -57,8 +62,9 @@ class User(IndexedObject):
 
 
     def save(self):
-
-        self.score = random.randint(0, 100)
+        #create a random score...
+        if not hasattr(self, 'score'):
+            self.score = random.randint(0, 100)
         IndexedObject.save(self)
 
     def setPassword(self, password, doSave = False):

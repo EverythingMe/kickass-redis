@@ -32,8 +32,14 @@ from patterns.idgenerator import IncrementalIdGenerator
 
 
 class KeySpec(object):
+    """
+    Object key descriptor
+    """
 
     def __init__(self, *keys):
+        """
+        @param keys all the keys to be included in this spec
+        """
         self._keys = list(keys)
 
 
@@ -68,11 +74,15 @@ class KeySpec(object):
 
 class IndexedObject(Rediston):
 
+
+    #This is the specification of which fields you want to index. override in child classes
     _keySpec = KeySpec({})
 
-
+    #this is the specification of which fields should be saved to redis
     _spec = ('id',)
 
+    #the id generator for the class. by default it is initialized to an incremental id generator
+    #you can replace it with another id generator if you want
     _idGenerator = None
 
 
