@@ -8,6 +8,13 @@ Redis is relatively low level, and while it is simple to start using, getting a 
 with it in an efficient way can be tricky. So I've created this project to wrap common use cases, into a loose framework
 of redis based solutions for real world problems.
 
+##Disclaimer:
+
+This project, while some snippets of it are taken from code I run in production in other projects, is an initial release,
+and should not be taken to be stable production code. As everything.me (and hopefully other people) starts using more and more
+of this code, it will become more mature and complete. But for now, take it as an alpha release, intended to get people involved.
+
+####Having said that, most of this stuff is pretty basic, and should work without problems, or be easily fixable :)
 
 #Components
 ----------
