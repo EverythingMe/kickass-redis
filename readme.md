@@ -16,19 +16,21 @@ To kick things off, the framework includes the following components:
 
 ## object_store
 
-    a fast yet simple ORM (well, OM actually) that automates creation, indexing and searching for complex objects using redis.
+a fast yet simple ORM (well, OM actually) that automates creation, indexing and searching for complex objects using redis.
 
 
 ## bitmap_counter
 
-    efficient unique value counter (to be used mostly as a unique users counter) with time slots, making use of redis bitmaps.
-    It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not function on redis-2.4.
+efficient unique value counter (to be used mostly as a unique users counter) with time slots, making use of redis bitmaps.
+
+It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not function on redis-2.4.
 
 
 ## idgenerator
 
-    Used in the object store, this can also be used standalone, as a centralized unique, incremental id generator using redis.
-    To optimize performance, it reserves in local memory many ids when accessing redis, which can be tuned.
+
+Used in the object store, this can also be used standalone, as a centralized unique, incremental id generator using redis.
+To optimize performance, it reserves in local memory many ids when accessing redis, which can be tuned.
 
 
 
