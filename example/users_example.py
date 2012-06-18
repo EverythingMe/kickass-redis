@@ -98,43 +98,6 @@ if __name__ == '__main__':
     #users =  User.get(Condition({'email': user.email}))
 
 
-    import PySQLPool
-    def getQueryObject(**kwargs):
-        """
-        Get a new connection from the PySQLPool
-        @return a new connection, of None if an error has occured
-        """
-        try:
-
-
-            conn = PySQLPool.getNewConnection(host = 'localhost',
-                username=  'root',
-                password=  '',
-                schema=  'test',
-                port= 3306,
-                commitOnEnd = True)
-            query = PySQLPool.getNewQuery(connection = conn)
-
-            return query
-        #something went wrong
-        except Exception, e:
-            logging.error("Could not get query object: %s", e)
-            return None
-
-
-    def mysqlCreator(n):
-
-        q = getQueryObject()
-
-        for i in xrange(int(n)):
-
-            uid = random.randint(1, 10000000)
-            queryString = "INSERT INTO users(name, email, registrationTime) VALUES (%s, %s, now())"
-
-            q.Query(queryString, ('User %s' % uid, 'user%s@domain.com' % uid))
-            #q.Query('COMMIT')
-
-
 
     def creationRunner(n):
         #print "Running %d times!" % int(n)
@@ -157,18 +120,6 @@ if __name__ == '__main__':
             #print user
         #print hits, '/', n
 
-    def mysqlGetRunner(n):
-        hits = 0
-        q = getQueryObject()
-
-        for i in xrange(int(n)):
-            q.Query('SELECT * FROM users WHERE id=%s', (i,))
-
-            if q.rowcount > 0:
-                hits += 1
-                #print user
-        print hits, '/', n
-
 
     total = 0
 
@@ -176,7 +127,6 @@ if __name__ == '__main__':
 
     #users = User.get(Condition({'score': Condition.Between(95, 100)}, paging= (0,1)))
     #print users
-    of = open('/tmp/stats.csv', 'w+')
     for z in xrange(20):
         st = time.time()
         N = 100000#
@@ -186,10 +136,7 @@ if __name__ == '__main__':
         et = time.time()
         writeTime = et-st
         total += N
-        print [total,N/writeTime ]
-        of.write('%s\t%s\n' % (total,N/writeTime))
-        of.flush()
-#        #print "after %d: %d ops took %.03fsec, rate %.02f qps" % ((z+1) * N, N, et-st, N/(et-st))
+        print "After %d inserts, rate is %.02f" % (total,N/writeTime)
 
 
 
