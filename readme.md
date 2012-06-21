@@ -130,6 +130,32 @@ Used in the object store, this can also be used standalone, as a centralized uni
 To optimize performance, it reserves in local memory many ids when accessing redis, which can be tuned.
 
 
+## redis_unit
+
+A unit-test like set of assertions about redis data to be used to validate the data inside a redis database.
+
+###Example:
+
+```python
+
+from patterns.redis_unit import RedisDataTest
+
+class MyTest(RedisDataTest):
+
+    def testSomeStuff(self):
+
+
+        self.assertPrefixCount('users:*', minAmount=100000)
+        self.assertKeysExists('users:1')
+        self.assertKeysType(self.test.T_HASH, 'users:1')
+        self.assertHashValue('users:1', 'name', self.equals('John'))
+
+
+test = MyTest('localhost', 6379)
+test.run()
+
+
+```
 
 
 ---------------------------
