@@ -4,6 +4,8 @@ Kickass-Redis - a loose framework of Redis based data solutions
 This project aims to create a repository of useful python libraries built on top of redis (and using each other),
 to automate data modeling with Redis.
 
+##For discussion, help and contributing code - join the google group at https://groups.google.com/forum/#!forum/kickass-redis
+
 Redis is relatively low level, and while it is simple to start using, getting a good knowledge of how to model problems
 with it in an efficient way can be tricky. So I've created this project to wrap common use cases, into a loose framework
 of redis based solutions for real world problems.
