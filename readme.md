@@ -189,6 +189,6 @@ test.run()
 
 3. Add Unique Key
 
-4. Add Full Text Key
+4. <s>Add Full Text Key</s> A very simplistic key exists.
 
 

@@ -54,11 +54,12 @@ class KeySpec(object):
 
         for key in self._keys:
 
-            if queryKeys.issubset(key.fieldSet):
+            if queryKeys == key.fieldSet:
                 logging.info("Found key for condition: %s", key)
                 return key
 
         raise ValueError("Could not find key for condition %s", condition)
+
 
     def keys(self):
         return self._keys
@@ -124,7 +125,19 @@ class IndexedObject(Rediston):
         """
         return '%s:%s' % (cls.__name(), id)
 
+    @classmethod
+    def config(cls, host, port, db, timeout = None):
 
+        for k in cls._keySpec.keys():
+            k.__class__.config(host, port, db, timeout)
+
+        cls._host = host
+        cls._port = port
+        cls._db = db
+        cls._timeout = timeout
+
+
+        cls.__connPool = None
 
     @classmethod
     def loadObjects(cls, ids, *fields):
