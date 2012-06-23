@@ -137,6 +137,7 @@ class IndexedObject(Rediston):
         p = cls._getPipeline()
 
         if not fields:
+
             [p.hgetall(cls.__key(id)) for id in ids]
         else:
             #we get the id anyway,no point in getting it from redis

@@ -60,26 +60,29 @@ class FullTextKey(AbstractKey, Rediston):
     '''
     
     trantab = string.maketrans("-_'", "   ")
+    stopchars = "\"'\\`'[]{}(),./?:)(*&^%$#@!="
 
-    def __init__(self, prefix, fields, objectScoringCallback = None, delimiter = ' '):
+    def __init__(self, prefix, alias, fields, objectScoringCallback = None, delimiter = ' '):
         '''
         Constructor
         '''
-        AbstractKey.__init__(self, prefix, fields)
+
+        AbstractKey.__init__(self, prefix, fields = [alias,])
         Rediston.__init__(self)
+        self.fieldSpec = fields #we don't use the key's "fields" to be able to query multiple fields at once
         self.delimiter = delimiter
         self.scoringCallback = objectScoringCallback
 
     def getKey(self, word):
         
-        return 'tx:%s:%s' % (self.prefix, word)
+        return 'ft:%s:%s' % (self.prefix, word)
     
         
     def normalizeString(self, str_):
         
         str_ = codecs.encode(str_, 'utf-8')
         
-        return str_.translate(self.trantab, "\"'\\`'[]{}(),./?:)(*&^%$#@!=")
+        return str_.translate(self.trantab, self.stopchars)
         
         
     def update(self, obj, pipeline = None):
@@ -93,18 +96,18 @@ class FullTextKey(AbstractKey, Rediston):
         pipe = pipeline or self._getPipeline(transaction=False)
         indexKeys = {}
         #split the words
-        for field, factor in self.fields.iteritems():
+        for field, factor in self.fieldSpec.iteritems():
 
             for token in re.split(self.delimiter, getattr(obj, field, '')):
                 
                 t = self.normalizeString(token.lower().strip())
                 
                 if t:
-                    indexKeys[t]= indexKeys.get(t, 0) + float(factor)*objFactor
+                    indexKeys[t]= indexKeys.get(t, 0) + float(factor)*score
 
         for x in indexKeys:
 
-            pipe.zadd(self.getKey(obj.__class__.__name__, x), obj.getKey(), indexKeys[x])
+            pipe.zadd(self.getKey(x), obj.id, indexKeys[x])
 
         if not pipeline:
             pipe.execute()
@@ -112,21 +115,22 @@ class FullTextKey(AbstractKey, Rediston):
         
     def find(self, condition):
 
-        string = ' '.join((condition.get(f) or ' ' for f in self.fields))
-        
+
+        string = condition.getValuesFor(self.fields[0])[0]
+
         tokens = filter(None, (self.normalizeString(value.lower().strip()) for value in re.split(self.delimiter, string)))
         
         
         if not tokens:
             return []
-        keys = [self.getKey(className, t) for t in tokens]
+        keys = [self.getKey(t) for t in tokens]
         
         destKey = ('tk:%s' % '|'.join(tokens))
         pipe = self._getPipeline(transaction=False)
         pipe.zinterstore(destKey, keys, 'SUM')
         pipe.zrevrange(destKey, 0, -1, False)
         rx = pipe.execute()
-        return pipe[1]
+        return rx[1]
 
 
 
