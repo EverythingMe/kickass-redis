@@ -10,6 +10,8 @@ Redis is relatively low level, and while it is simple to start using, getting a 
 with it in an efficient way can be tricky. So I've created this project to wrap common use cases, into a loose framework
 of redis based solutions for real world problems.
 
+The project has started out as a bunch of code examples for a presentation I recently gave on [IL Tech Talks](http://www.iltechtalks.org.il/),  that can be found here: http://www.slideshare.net/dvirsky/kicking-ass-with-redis
+
 ##Disclaimer:
 
 This project, while some snippets of it are taken from code I run in production in other projects, is an initial release,
