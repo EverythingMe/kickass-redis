@@ -19,21 +19,35 @@ if __name__ == '__main__':
     idMapper = IdMapper('uzrs')
 
     counter = BitmapCounter('unique_users', timeResolutions=(1,),idMapper=idMapper )
+    daily_mobile_counter = BitmapCounter('mobile_users', timeResolutions=(BitmapCounter.RES_DAY,),idMapper=idMapper )
 
     week = tuple((int(time.time() - i*86400) for i in  xrange(7, 0, -1)))
-    print counter.cohortAnalysis(week, 86400)
+    #print counter.cohortAnalysis(week, 86400)
     #sampling current user
-    counter.add(3)
+    #counter.add(3)
 
 
     #Filling with junk entries
     for i in xrange(5000):
         userId = random.randint(1, 1000)
         counter.add(userId)
+
+        if userId % 2 == 0:
+            daily_mobile_counter.add(userId)
+
         time.sleep(0.001)
 
     timePoints = tuple((time.time() - i for i in  xrange(5, 0, -1)))
-    print counter.cohortAnalysis(timePoints, 1)
+    print "Total unique users: %s" % counter.getCount(timePoints)
+    print "Total Mobile users: %s" % daily_mobile_counter.getCount([timePoints[0]])
+    print "Cohort all users: %s" % counter.cohortAnalysis(timePoints, 1)
+    print "Cohort mobile users: %s" % counter.cohortAnalysis(timePoints, 1, filterBitmapKey=daily_mobile_counter.getKey(timePoints[0]))
+
+    print "Funnel all users: %s" % counter.funnelAnalysis(timePoints, 1)
+    print "Funnel mobile users: %s" % counter.funnelAnalysis(timePoints, 1, filterBitmapKey=daily_mobile_counter.getKey(timePoints[0]))
+
+
+
     #Getting the unique user count for today
 #    counter.getCount((time.time(),), counter.RES_DAY)
 #
@@ -45,4 +59,5 @@ if __name__ == '__main__':
 #    #average DAU for the past minute
 #    avg = counter.aggregateCounts(timePoints, counter.OP_AVG, timeResolution=1)
 #    print "Average users per second in range: %s"  % avg
+
 
