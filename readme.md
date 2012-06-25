@@ -29,6 +29,8 @@ To kick things off, the framework includes the following components:
 
 a fast yet simple ORM (well, OM actually) that automates creation, indexing and searching for complex objects using redis.
 
+Indexes include: simple string index, numeric index that supports sorting and ranges, simplistic full text index, and a unique key.
+
 ###Example:
 
 ```python
@@ -89,6 +91,9 @@ counter.add(3)
 #Getting the unique user count for today
 counter.getCount((time.time(),), counter.RES_DAY)
 ```
+
+###New:
+It now also supports mapping of non sequential or non numeric ids to incemental ids, that makes it memory optimized.
 
 
 ## LuaCall
@@ -185,10 +190,6 @@ test.run()
 
 1. Add unit tests for all objects
 
-2. Add setup.py script
-
-3. Add Unique Key
-
-
+2. Add geo-key
 
 
