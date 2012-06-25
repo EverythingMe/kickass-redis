@@ -34,8 +34,8 @@ Indexes include: simple string index, numeric index that supports sorting and ra
 ###Example:
 
 ```python
-from patterns.object_store.objects import IndexedObject, KeySpec
-from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
+from kickass_redis.patterns.object_store.objects import IndexedObject, KeySpec
+from kickass_redis.patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
 
 class User(IndexedObject):
 
@@ -80,7 +80,7 @@ It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not functi
 ###Example:
 
 ```python
-from patterns.bitmap_counter import BitmapCounter
+from kickass_redis.patterns.bitmap_counter import BitmapCounter
 
 #Daily unique users counter
 counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
@@ -90,6 +90,13 @@ counter.add(3)
 
 #Getting the unique user count for today
 counter.getCount((time.time(),), counter.RES_DAY)
+
+#Getting cohort analysis on your users for the past week
+week = tuple((int(time.time() - i*86400) for i in  xrange(7, 0, -1)))
+print counter.cohortAnalysis(week, counter.RES_DAY)
+
+#Getting funnel analysis on your users for the past week
+print counter.funnelAnalysis(week, counter.RES_DAY)
 ```
 
 ###New:
@@ -115,7 +122,7 @@ return redis.call('get', KEYS[1])
 Running it from python:
 ```python
 import redis
-from patterns.lua import LuaCall, LuaScriptError
+from kickass_redis.patterns.lua import LuaCall, LuaScriptError
 conn = redis.Redis()
 
 #Define the call, and make it runn on our connection
@@ -145,7 +152,7 @@ A unit-test like set of assertions about redis data to be used to validate the d
 
 ```python
 
-from patterns.redis_unit import RedisDataTest
+from kickass_redis.patterns.redis_unit import RedisDataTest
 
 class MyTest(RedisDataTest):
 

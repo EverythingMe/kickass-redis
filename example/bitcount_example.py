@@ -20,7 +20,8 @@ if __name__ == '__main__':
 
     counter = BitmapCounter('unique_users', timeResolutions=(1,),idMapper=idMapper )
 
-
+    week = tuple((int(time.time() - i*86400) for i in  xrange(7, 0, -1)))
+    print counter.cohortAnalysis(week, 86400)
     #sampling current user
     counter.add(3)
 
