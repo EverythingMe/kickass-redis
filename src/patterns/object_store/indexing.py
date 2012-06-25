@@ -136,7 +136,10 @@ class FullTextKey(AbstractKey, Rediston):
 
 
 class UnorderedKey(AbstractKey, Rediston):
-
+    """
+    A simple catch all key, non unique, ideal for short texts (emails, etc). case sensitive.
+    it uses hashing of the value as a score in a sorted set
+    """
     def __init__(self, prefix, fields):
         '''
         Constructor
@@ -147,6 +150,7 @@ class UnorderedKey(AbstractKey, Rediston):
 
 
     def getValue(self, _dict):
+
 
         vals = '::'.join(('%s' % _dict[f] for f in self.fields))
 
@@ -202,7 +206,9 @@ class UnorderedKey(AbstractKey, Rediston):
 
 
 class OrderedNumericalKey(AbstractKey, Rediston):
-
+    """
+    A key for numerical fields (ints or floats) that can sort and page results
+    """
     def __init__(self, prefix, field):
         '''
         Constructor
@@ -271,5 +277,84 @@ class OrderedNumericalKey(AbstractKey, Rediston):
 
 
 
+class UniqueKeyDuplicateError(Exception):
 
+    pass
+
+
+
+class UniqueKey(AbstractKey, Rediston):
+    """
+    Unique value key, for strings or numbers
+    It uses a HASH of value=>objectId to make sure no two objects have the same value
+    it raises UniqueKeyDuplicateError if you hit a duplicate value
+    """
+    def __init__(self, prefix, fields):
+        '''
+        Constructor
+        '''
+        AbstractKey.__init__(self, prefix, fields)
+        Rediston.__init__(self)
+
+
+    def getValue(self, _dict):
+
+
+        return '::'.join(('%s' % _dict[f] for f in self.fields))
+
+    @InstanceCache
+    def redisKey(self):
+
+        return 'uk:%s:%s' % (self.prefix, ','.join(self.fields))
+
+
+    def update(self, obj, pipeline = None):
+        """
+        Update the key with the value of this object
+        """
+
+        val = self.getValue(obj.__dict__)
+        pipe = self._getPipeline('master')
+
+        #we set and check the value at once, in case the key is already taken we need to check the current object...
+        pipe.hsetnx(self.redisKey(), val, obj.id)
+        pipe.hget(self.redisKey(), val)
+
+        rx = pipe.execute()
+        #this means
+        if rx[0] == 0:
+            currentObjId= rx[1]
+            logging.info("Possible unique key collision, checking... object: %s, current in key: %s", obj.id, currentObjId)
+
+            if currentObjId != '%s' % obj.id:
+                logging.warn("Unique Key collision. wanted to set %s but key already has %s", obj, currentObjId)
+                raise UniqueKeyDuplicateError("Duplicate error for key %s" % self)
+            else:
+                logging.info("Unique key set to the same object")
+        else:
+            logging.info("Unique key %s set new value for %s:%s", self, obj.id, val)
+
+    def updateMany(self, ids, cls):
+
+        #first, get the values for these ids
+        objs = cls.loadObjects(ids, *self.fields)
+
+        #build a dictionary of all the values to be updated
+        updateDict = {}
+        for obj in objs:
+            if obj:
+                self.update(obj)
+
+
+
+
+    def find(self, condition):
+        """
+        find objects matching  a certian condition
+        currently the condition has to be exactly field=value. no multiple options and no ranges allowed
+        """
+        val = self.getValue(condition.fieldsAndValues)
+        conn = self._getConnection()
+        id = conn.hget(self.redisKey(), val)
+        return [id] if id is not None else []
 

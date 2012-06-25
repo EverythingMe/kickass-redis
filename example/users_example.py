@@ -27,14 +27,13 @@
 __author__ = 'dvirsky'
 
 from patterns.object_store.objects import IndexedObject, KeySpec
-from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
+from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey, UniqueKey, UniqueKeyDuplicateError
+from patterns.object_store.condition import Condition
 
 import time
 import logging
 from hashlib import md5
 
-from patterns.object_store.objects import IndexedObject, KeySpec
-from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
 
 class User(IndexedObject):
 
@@ -46,8 +45,9 @@ class User(IndexedObject):
 
     #The keys for this object
     _keySpec = KeySpec(
-        UnorderedKey(prefix='users',fields=('name',)),
-        OrderedNumericalKey(prefix='users', field='score')
+        #UnorderedKey(prefix='users',fields=('name',)),
+        OrderedNumericalKey(prefix='users', field='score'),
+        UniqueKey('users', ('name',))
     )
 
     def __init__(self, **kwargs):
@@ -123,20 +123,34 @@ if __name__ == '__main__':
 
     total = 0
 
+    uid = random.randint(1, 10000000)
+    user1 = User(email = 'user%s@domain.com' % uid, name = 'User %s' % uid)
+    print "SAVE 1"
+    user1.save()
+    print "SAVE 2"
+    user2 = User(email = 'user%s@domain.com' % uid, name = 'User %s' % uid)
+    print "SAVE 3"
+    try:
+        user2.save()
+    except UniqueKeyDuplicateError:
+        print "Duplicate caught! yay!"
+
+    u = User.get(Condition({'name': user1.name}))
+    print "found %s" % u
     #creationRunner(100)
 
     #users = User.get(Condition({'score': Condition.Between(95, 100)}, paging= (0,1)))
     #print users
-    for z in xrange(20):
-        st = time.time()
-        N = 100000#
-        procs = 8
-        p = Pool(procs)
-        p.map(creationRunner, [N/procs] * procs)
-        et = time.time()
-        writeTime = et-st
-        total += N
-        print "After %d inserts, rate is %.02f" % (total,N/writeTime)
+#    for z in xrange(20):
+#        st = time.time()
+#        N = 100000#
+#        procs = 8
+#        p = Pool(procs)
+#        p.map(creationRunner, [N/procs] * procs)
+#        et = time.time()
+#        writeTime = et-st
+#        total += N
+#        print "After %d inserts, rate is %.02f" % (total,N/writeTime)
 
 
 
