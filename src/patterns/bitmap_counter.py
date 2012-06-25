@@ -26,9 +26,11 @@
 
 __author__ = 'dvirsky'
 
-from util import Rediston, TimeSampler
+from util import Rediston, TimeSampler, InstanceCache
 import logging
 import time
+
+from idgenerator import  IncrementalIdGenerator
 
 class BitmapCounter(Rediston):
     """
@@ -46,31 +48,40 @@ class BitmapCounter(Rediston):
     OP_AVG = 'AVG'
     OP_INTERESECT = 'INTERSECT'
 
-    def __init__(self, metricName, timeResolutions = (86400,)):
+
+
+    def __init__(self, metricName, timeResolutions = (86400,), idMapper = None):
         """
         Constructor
         @param metricName the name of the metric we're sampling, to be used as the redis key
         @param timeResolutions a tuple of resolutions to be sampled, in seconds
+        @param idMapper optional IdMapper object that can convert non sequential ids to sequential ones
         NOTE: there will be an extra counter key in redis for each resolution, so lots of resolutions can cause huge RAM overhead
         """
         self.metric = metricName
         self.timeResolutions = timeResolutions
+        self.idMapper = idMapper
 
     def __getKey(self, timestamp, resolution):
         """
         Get the redis key for this object, for internal use
         """
 
-        return 'uc:%s:%s:%s' % (self.metric, resolution, timestamp - (timestamp % resolution))
+        return 'uc:%s:%s:%s' % (self.metric, resolution, int(timestamp - (timestamp % resolution)))
 
 
-    def add(self, objectId, timestamp = None):
+    def add(self, objectId, timestamp = None, sequentialIdMappingPrefix = None):
         """
         Add one sample.
         TODO: enable multiple samples in one pipeline
         @param objectId an integer of the object's id. NOTE: do not use this on huge numbers
         @param timestamp the event time, defaults to now
         """
+
+        #map to a sequential id if needed
+        if self.idMapper:
+            objectId = self.idMapper.getSequentialId(objectId)
+
         timestamp = timestamp or time.time()
 
         #get the keys to sample to
@@ -135,8 +146,93 @@ class BitmapCounter(Rediston):
 
     def cohortAnalysis(self, timestamps, timeResolution):
         """
-        TBD: cohort analysis
+        Given a list of timestamps, generates a list of retention measures of the first timestamp, for each later timestamp
+        @return a list of tuples [(timestamp,num),...]
         """
-        pass
-        #dest = 'cohort:%s:%s' % (self.metric,hash(timestamps))
+
+        #put the first timestamp as the first record in what we return
+        ret = self.getCount((timestamps[0],), timeResolution)
+        conn = self._getConnection()
+        #get the count for each timestamp
+        for idx, ts in enumerate(timestamps[1:]):
+            dest = 'cohort:%s:%s:%s' % (self.metric,ts,idx)
+            conn.execute_command('BITOP', 'AND', dest, self.__getKey(timestamps[0], timeResolution),
+                                  self.__getKey(ts, timeResolution))
+
+            count = conn.execute_command('BITCOUNT', dest)
+            print ts, count
+            ret.append((ts,count))
+            conn.expire(dest, 60)
+
+
+        return ret
+
+
+    def funnelAnalysis(self, timestamps, timeResolution):
+        """
+        Given a list of timestamps, return a funnel analysis - i.e. for each timestamp, an interesection of it and all the previous points
+        @return a list of tuples [(timestamp,num),...]
+        """
+        conn = self._getConnection()
+
+        prev = None
+        ret = []
+        #get the count for each timestamp
+        for i in xrange(len(timestamps)):
+            dest = 'funnel:%s:%s:%s' % (self.metric,timestamps[i],i)
+            conn.execute_command('BITOP', 'AND', dest, prev or self.__getKey(timestamps[0], timeResolution),
+                                 self.__getKey(timestamps[i], timeResolution))
+
+            count = conn.execute_command('BITCOUNT', dest)
+            prev = dest
+            logging.info("Funnel for timestamp %s: %s", timestamps[i], count)
+            ret.append((timestamps[i],count))
+            conn.expire(dest, 60)
+
+
+        return ret
+
+
+
+class IdMapper(Rediston):
+
+    """
+    This class creates a compact mapping between a non sequential object id to a sequential id
+    Create a mapper an pass it to the bitmap counter if you want to convert big or textual ids to sequentials
+    """
+
+
+    def __init__(self, prefix):
+
+        self.prefix = prefix
+        self.idgen = IncrementalIdGenerator(namespace=self._redisKey())
+
+    def _redisKey(self):
+
+        return 'idmap:%s' % self.prefix
+
+    def getSequentialId(self, objectId):
+        """
+        Convert a non sequential id to sequential id, by either creating a new mapping or retrieving an old one
+        """
+        conn = self._getConnection()
+        rc = conn.hget(self._redisKey(), objectId)
+        if rc:
+            logging.info("Found id mapping for %s:%s: %s", self.prefix, objectId, rc)
+            return rc
+        else:
+            id = self.idgen.getId()
+            rc = conn.hsetnx(self._redisKey(), objectId, id)
+            if rc: #the write was successful
+                logging.info("Created new sequential id for %s:%s: %s", self.prefix, objectId, rc)
+                return id
+            else: #possible race con
+                logging.info("Got new sequential id for %s:%s: %s", self.prefix, objectId, rc)
+                return conn.hget(self._redisKey(), objectId)
+
+
+
+
+
+
 
