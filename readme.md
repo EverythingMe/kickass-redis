@@ -12,13 +12,22 @@ of redis based solutions for real world problems.
 
 The project has started out as a bunch of code examples for a presentation I recently gave on [IL Tech Talks](http://www.iltechtalks.org.il/),  that can be found here: http://www.slideshare.net/dvirsky/kicking-ass-with-redis
 
-##Disclaimer:
+#Installation
 
-This project, while some snippets of it are taken from code I run in production in other projects, is an initial release,
-and should not be taken to be stable production code. As everything.me (and hopefully other people) starts using more and more
-of this code, it will become more mature and complete. But for now, take it as an alpha release, intended to get people involved.
+Option 1:
 
-####Having said that, most of this stuff is pretty basic, and should work without problems, or be easily fixable :)
+1. Clone this repo or download the sources
+
+2. `cd kickass-redis`
+
+3. `python setup.py build`
+
+4. `sudo python setup.py install`
+
+Option 2:
+
+`sudo pip install kickass_redis`
+
 
 #Components
 ----------
