@@ -24,7 +24,7 @@ if __name__ == '__main__':
     week = tuple((int(time.time() - i*86400) for i in  xrange(7, 0, -1)))
     #print counter.cohortAnalysis(week, 86400)
     #sampling current user
-    #counter.add(3)
+    counter.add(3)
 
 
     #Filling with junk entries

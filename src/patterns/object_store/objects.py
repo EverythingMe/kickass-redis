@@ -77,7 +77,7 @@ class IndexedObject(Rediston):
 
 
     #This is the specification of which fields you want to index. override in child classes
-    _keySpec = KeySpec({})
+    _keySpec = KeySpec()
 
     #this is the specification of which fields should be saved to redis
     _spec = ('id',)
@@ -98,6 +98,15 @@ class IndexedObject(Rediston):
         if not self.__class__._idGenerator:
             self.__class__._idGenerator = IncrementalIdGenerator(self.__name())
 
+
+    @classmethod
+    def createNew(cls, *args, **kwargs):
+        """
+        Create a new object and save it immeditely
+        """
+        obj = cls(*args, **kwargs)
+        obj.save()
+        return obj
 
     @classmethod
     def __name(cls):
@@ -195,6 +204,7 @@ class IndexedObject(Rediston):
 
         p = pipeline or self._getPipeline('master', transaction=False)
         for k in self._keySpec.keys():
+
             k.update(self, p)
         if not pipeline:
             p.execute()
@@ -241,6 +251,7 @@ class IndexedObject(Rediston):
         Set a field(s) in the object and save it to the database
         @param keyValues free form x=y kwargs
         """
+
         if not self.id:
             raise ValueError("Cannot update a value for an unsaved object")
 
@@ -253,7 +264,7 @@ class IndexedObject(Rediston):
             k.update(self, keyValues)
 
         #set the data in the object (after successful redis update, to avoid invalid objects)
-        for k, v in keyValues:
+        for k, v in keyValues.iteritems():
             setattr(self, k, v)
 
         return ret
@@ -267,7 +278,7 @@ class IndexedObject(Rediston):
         """
 
         ids = cls.find(condition)
-        pipe = self._getPipeline('master')
+        pipe = cls._getPipeline('master')
         for id in ids:
             pipe.hincrby(cls.__key(id), fieldName, amount)
 
@@ -275,7 +286,7 @@ class IndexedObject(Rediston):
         newVals = pipe.execute()
 
         #udpate the keys
-        updateAbleKeys = self.__keySpec.findKeysForUpdate((fieldName,))
+        updateAbleKeys = cls._keySpec.findKeysForUpdate((fieldName,))
         for key in updateAbleKeys:
             key.updateMany(((id, newVals[idx]) for idx, id in enumerate(ids)))
 
