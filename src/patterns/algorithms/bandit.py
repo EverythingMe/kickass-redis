@@ -39,8 +39,6 @@ class Option(IndexedObject):
         UnorderedKey('opt', ('name','testId'))
     )
 
-    __algo = None
-
     def __init__(self, name = '', playCount = 0, reward = 0, testId = 0, **kwargs):
 
         IndexedObject.__init__(self,
@@ -86,7 +84,7 @@ class Bandit(IndexedObject):
         opt.save()
         self.options.append(opt)
 
-    def loadOptions(self, noCache = False):
+    def loadOptions(self, noCache = True):
 
         if not noCache and self.options:
             return len(self.options)
@@ -96,11 +94,10 @@ class Bandit(IndexedObject):
         return len(self.options)
 
 
-    def selectOptionByScore(self,noCache = False):
+    def selectOptionByScore(self,noCache = True):
 
         if not self.loadOptions(noCache):
             raise RuntimeError("Could not load any options for test %s" % self)
-
 
 
         self.totalPlays = sum((opt.playCount for opt in self.options))

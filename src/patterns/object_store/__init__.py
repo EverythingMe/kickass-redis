@@ -1,3 +1,3 @@
 __author__ = 'dvirsky'
 
-__alll__ = ['condition', 'indexing', 'objects']
+__all__ = ['condition', 'indexing', 'objects']
