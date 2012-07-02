@@ -26,13 +26,14 @@
 
 __author__ = 'dvirsky'
 
-from patterns.object_store.objects import IndexedObject, KeySpec
-from patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey, UniqueKey, UniqueKeyDuplicateError
-from patterns.object_store.condition import Condition
+from kickass_redis.patterns.object_store.objects import IndexedObject, KeySpec
+from kickass_redis.patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey, UniqueKey, UniqueKeyDuplicateError
+from kickass_redis.patterns.object_store.condition import Condition
 
 import time
 import logging
 from hashlib import md5
+
 
 
 class User(IndexedObject):

@@ -23,9 +23,10 @@
 #The views and conclusions contained in the software and documentation are those of the
 #authors and should not be interpreted as representing official policies, either expressed
 #or implied, of Do@.
+from __future__ import absolute_import
 
-from patterns.object_store.objects import  IndexedObject, KeySpec
-from patterns.object_store.indexing import *
+from ..object_store.objects import  IndexedObject, KeySpec
+from ..object_store.indexing import *
 import math
 import random
 

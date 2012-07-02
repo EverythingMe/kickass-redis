@@ -23,14 +23,15 @@
 #The views and conclusions contained in the software and documentation are those of the
 #authors and should not be interpreted as representing official policies, either expressed
 #or implied, of Do@.
-
+from __future__ import absolute_import
 __author__ = 'dvirsky'
 
-from util import Rediston, TimeSampler, InstanceCache
+
+from ..util import Rediston, TimeSampler, InstanceCache
 import logging
 import time
 
-from idgenerator import  IncrementalIdGenerator
+from ..patterns.idgenerator import  IncrementalIdGenerator
 
 class BitmapCounter(Rediston):
     """

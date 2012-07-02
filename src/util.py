@@ -29,7 +29,7 @@ Various Util functinos
 """
 __author__ = 'dvirsky'
 
-
+import redis
 
 '''
 Generic singleton wrapper

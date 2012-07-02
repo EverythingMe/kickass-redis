@@ -34,10 +34,10 @@ import redis
 import tagpy
 import logging
 import os
-from util import InstanceCache, Rediston
-from patterns.object_store.indexing import FullTextKey, UnorderedKey
-from patterns.object_store.condition import  Condition
-from patterns.object_store.objects import IndexedObject, KeySpec
+from kickass_redis.util import InstanceCache, Rediston
+from kickass_redis.patterns.object_store.indexing import FullTextKey, UnorderedKey
+from kickass_redis.patterns.object_store.condition import  Condition
+from kickass_redis.patterns.object_store.objects import IndexedObject, KeySpec
 
 
 class Track(IndexedObject):
@@ -152,7 +152,7 @@ if __name__ == '__main__':
     
     lib = MusicLibrary(['/path/to/Music'])
     
-    #lib.scanFolders()
+    lib.scanFolders()
     print lib.findTracks(u'the pixies')
     print lib.getArtist(u'Metronomy')
     print lib.getAlbum(u'The Killers', u'Live From The Royal Albert Hall')

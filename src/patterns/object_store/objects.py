@@ -24,11 +24,12 @@
 #authors and should not be interpreted as representing official policies, either expressed
 #or implied, of Do@.
 
+from __future__ import absolute_import
 __author__ = 'dvirsky'
 
 import logging
-from util import  InstanceCache, Rediston
-from patterns.idgenerator import IncrementalIdGenerator
+from ...util import  InstanceCache, Rediston
+from ..idgenerator import IncrementalIdGenerator
 
 
 class KeySpec(object):

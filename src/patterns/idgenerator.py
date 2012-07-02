@@ -23,10 +23,11 @@
 #The views and conclusions contained in the software and documentation are those of the
 #authors and should not be interpreted as representing official policies, either expressed
 #or implied, of Do@.
+from __future__ import absolute_import
 
 __author__ = 'dvirsky'
 
-from util import Rediston, InstanceCache
+from ..util import Rediston, InstanceCache
 from threading import RLock
 from collections import deque
 import logging

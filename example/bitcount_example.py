@@ -3,8 +3,8 @@
 Example of using the unique id counter object
 """
 __author__ = 'dvirsky'
-from util import TimeSampler
-from patterns.bitmap_counter import BitmapCounter, IdMapper
+from kickass_redis.util import TimeSampler
+from kickass_redis.patterns.bitmap_counter import BitmapCounter, IdMapper
 import random
 import time
 

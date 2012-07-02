@@ -23,13 +23,14 @@
 #The views and conclusions contained in the software and documentation are those of the
 #authors and should not be interpreted as representing official policies, either expressed
 #or implied, of Do@.
+from __future__ import absolute_import
 
 import string
 
 import codecs
 import re
-from util import Rediston, InstanceCache
-from patterns.object_store.condition import Condition
+from ...util import Rediston, InstanceCache
+from .condition import Condition
 import pyhash
 import logging
 
