@@ -48,6 +48,10 @@ class BitmapCounter(Rediston):
     
     SNAP_SUNDAY = 259200
     SNAP_MONDAY = 345600
+    
+    TZ_GMT = 0
+    TZ_PST = -8
+    TZ_EST = -5
 
     OP_TOTAL = 'TOTAL'
     OP_AVG = 'AVG'
@@ -55,7 +59,7 @@ class BitmapCounter(Rediston):
 
 
 
-    def __init__(self, metricName, timeResolutions=(86400,), snapWeekTo=259200, timeZone=0, idMapper=None):
+    def __init__(self, metricName, timeResolutions=(86400,), snapWeekTo=SNAP_SUNDAY, timeZone=TZ_GMT, idMapper=None):
         """
         Constructor
         @param metricName the name of the metric we're sampling, to be used as the redis key
