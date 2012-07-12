@@ -41,9 +41,13 @@ class BitmapCounter(Rediston):
     (TBD: the calss should be able to do this)
     """
 
+    RES_WEEK = 604800
     RES_DAY = 86400
     RES_HOUR = 3600
     RES_MINUTE = 60
+    
+    SNAP_SUNDAY = 259200
+    SNAP_MONDAY = 345600
 
     OP_TOTAL = 'TOTAL'
     OP_AVG = 'AVG'
@@ -51,28 +55,35 @@ class BitmapCounter(Rediston):
 
 
 
-    def __init__(self, metricName, timeResolutions = (86400,), idMapper = None):
+    def __init__(self, metricName, timeResolutions=(86400,), snapWeekTo=259200, timeZone=0, idMapper=None):
         """
         Constructor
         @param metricName the name of the metric we're sampling, to be used as the redis key
         @param timeResolutions a tuple of resolutions to be sampled, in seconds
         @param idMapper optional IdMapper object that can convert non sequential ids to sequential ones
+        @param snapWeekTo used when a week resolution is set, defines to which day should the timestamp be snapped
+        @param timeZone for week snaps, define time zone by difference from GMT in hours
         NOTE: there will be an extra counter key in redis for each resolution, so lots of resolutions can cause huge RAM overhead
         """
         self.metric = metricName
         self.timeResolutions = timeResolutions
         self.idMapper = idMapper
+        self.snapWeekTo = snapWeekTo
+        self.timeZone = timeZone * self.RES_HOUR
 
-    def getKey(self, timestamp, resolution = None):
+    def getKey(self, timestamp, resolution=None):
         """
         Get the redis key for this object, for internal use
         """
-
+        
+        snap = 0
         resolution = resolution or self.timeResolutions[0]
-        return 'uc:%s:%s:%s' % (self.metric, resolution, int(timestamp - (timestamp % resolution)))
+        if resolution == self.RES_WEEK:
+            snap = self.snapWeekTo - self.timeZone
+        return 'uc:%s:%s:%s' % (self.metric, resolution, int(timestamp - ((timestamp - snap) % resolution)))
 
 
-    def add(self, objectId, timestamp = None, sequentialIdMappingPrefix = None):
+    def add(self, objectId, timestamp=None, sequentialIdMappingPrefix=None):
         """
         Add one sample.
         TODO: enable multiple samples in one pipeline
@@ -93,7 +104,7 @@ class BitmapCounter(Rediston):
         [pipe.setbit(key, int(objectId), 1) for key in keys]
         pipe.execute()
 
-    def isSet(self, objectId, timestamp, timeResolution = None):
+    def isSet(self, objectId, timestamp, timeResolution=None):
         """
         Tell us whether a specific objectId is set in the counter for a specific resolution
         @param objectId the object to test
@@ -105,7 +116,7 @@ class BitmapCounter(Rediston):
         return self._getConnection().getbit(key, objectId)
 
 
-    def getCount(self, timestamps, timeResolution = None):
+    def getCount(self, timestamps, timeResolution=None):
         """
         Count the cardinality of time slots
         @param timestamps a list of timestamps to test
@@ -120,7 +131,7 @@ class BitmapCounter(Rediston):
 
 
 
-    def aggregateCounts(self,  timestamps, op = OP_TOTAL,timeResolution = None, expire = True ):
+    def aggregateCounts(self, timestamps, op=OP_TOTAL, timeResolution=None, expire=True):
         """
         Aggregate a few time slots, either summing the unique total, average or memebers in all slots
         @param timestamps a list of timestamps to test
@@ -138,20 +149,20 @@ class BitmapCounter(Rediston):
         else:
             bitop = 'OR'
 
-        dest = 'aggregate:%s:%s' % (self.metric,hash(timestamps))
+        dest = 'aggregate:%s:%s' % (self.metric, hash(timestamps))
         pipe = self._getPipeline()
-        pipe.execute_command('BITOP',bitop, dest, *(self.getKey(timestamp, timeResolution) for timestamp in timestamps))
+        pipe.execute_command('BITOP', bitop, dest, *(self.getKey(timestamp, timeResolution) for timestamp in timestamps))
         pipe.execute_command('BITCOUNT', dest)
         if expire:
             pipe.expire(dest, 60)
         rx = pipe.execute()
         ret = rx[1]
-        if op ==  BitmapCounter.OP_AVG:
-            return float(ret)/len(timestamps)
+        if op == BitmapCounter.OP_AVG:
+            return float(ret) / len(timestamps)
         else:
             return ret
 
-    def cohortAnalysis(self, timestamps, timeResolution, filterBitmapKey = None):
+    def cohortAnalysis(self, timestamps, timeResolution, filterBitmapKey=None):
         """
         Given a list of timestamps, generates a list of retention measures of the first timestamp, for each later timestamp
         @param timestamps a tuple of timestamps to sample
@@ -165,7 +176,7 @@ class BitmapCounter(Rediston):
         conn = self._getConnection()
         #get the count for each timestamp
         for idx, ts in enumerate(timestamps):
-            dest = 'cohort:%s:%s:%s' % (self.metric,ts,idx)
+            dest = 'cohort:%s:%s:%s' % (self.metric, ts, idx)
             bitmaps = [self.getKey(timestamps[0], timeResolution), self.getKey(ts, timeResolution)]
 
             #add filtering bitmap if needed
@@ -175,14 +186,14 @@ class BitmapCounter(Rediston):
             conn.execute_command('BITOP', 'AND', dest, *bitmaps)
             count = conn.execute_command('BITCOUNT', dest)
 
-            ret.append((ts,count))
+            ret.append((ts, count))
             conn.expire(dest, 60)
 
 
         return ret
 
 
-    def funnelAnalysis(self, timestamps, timeResolution, filterBitmapKey = None):
+    def funnelAnalysis(self, timestamps, timeResolution, filterBitmapKey=None):
         """
         Given a list of timestamps, return a funnel analysis - i.e. for each timestamp, an interesection of it and all the previous points
         @param timestamps a tuple of timestamps to sample
@@ -196,14 +207,14 @@ class BitmapCounter(Rediston):
         ret = []
         #get the count for each timestamp
         for i in xrange(len(timestamps)):
-            dest = 'funnel:%s:%s:%s' % (self.metric,timestamps[i],i)
+            dest = 'funnel:%s:%s:%s' % (self.metric, timestamps[i], i)
             conn.execute_command('BITOP', 'AND', dest, prev or filterBitmapKey or self.getKey(timestamps[0], timeResolution),
                                  self.getKey(timestamps[i], timeResolution))
 
             count = conn.execute_command('BITCOUNT', dest)
             prev = dest
             logging.info("Funnel for timestamp %s: %s", timestamps[i], count)
-            ret.append((timestamps[i],count))
+            ret.append((timestamps[i], count))
             conn.expire(dest, 60)
 
 
