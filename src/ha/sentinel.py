@@ -36,7 +36,7 @@ The next step is going to be connecting it to an internal in-code load balancer,
 based on the cluster state.
 
 I'd like to try and exploit the sentinel as a sort of configuration manager for a redis cluster, replacing
-Zookeper & friends  - all a client needs to know is how to connect to a sentine, and everything from there on
+Zookeeper & friends  - all a client needs to know is how to connect to a sentine, and everything from there on
 happens automagically.
 
 to run the client, simply point it to a sentinel and start it. it will bootstrap to the current state and log the
