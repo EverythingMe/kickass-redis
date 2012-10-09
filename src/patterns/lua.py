@@ -37,7 +37,7 @@ class LuaCall(object):
         conn = conn or self.conn
         #try to execute
         try:
-            return conn.execute_command('EVALSHA', self.sha, len(keys), *(keys + args))
+            return conn.evalsha(self.sha, len(keys), *(keys + args))
         except RedisError, e:
             #check for script doesn't exist error
             if e.message.startswith('NOSCRIPT'):
@@ -48,7 +48,7 @@ class LuaCall(object):
                 #one more time, with feeling!
                 try:
 
-                    return conn.execute_command('EVLASHA', self.sha, len(keys), *(keys + args))
+                    return conn.evalsha(self.sha, len(keys), *(keys + args))
                 except redis.RedisError, e:
                     raise LuaScriptError("Could not execute lua call: %s" % e.message)
             else:
@@ -60,14 +60,14 @@ class LuaCall(object):
         Silently preload the function to redis to be used in the future
         """
         conn = conn or self.conn
-        self.sha = conn.execute_command('SCRIPT', 'LOAD', self.source)
+        self.sha = conn.script_load(self.source)
 
     def isCached(self, conn = None):
         """
         Check if our function exists
         """
         conn = conn or self.conn
-        return conn.execute_command('SCRIPT', 'EXISTS', self.sha)
+        return conn.script_exists(self.sha)
 
 
 

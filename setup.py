@@ -1,9 +1,9 @@
 from distutils.core import setup
 setup(name='kickass_redis',
-    version='0.1.4',
+    version='0.1.5',
     package_dir={'kickass_redis': 'src'},
     packages=['kickass_redis', 'kickass_redis.patterns', 'kickass_redis.patterns.object_store'],
-    requires=['redis'],
+    requires=['redis(>=2.7.1)'],
     url='https://github.com/EverythingMe/kickass-redis',
     author='Dvir Volk',
     description= 'A loose framework of kick-ass redis patterns',

@@ -130,7 +130,7 @@ class BitmapCounter(Rediston):
         timeResolution = timeResolution or self.timeResolutions[0]
         pipe = self._getPipeline()
 
-        [pipe.execute_command('BITCOUNT', self.getKey(timestamp, timeResolution)) for timestamp in timestamps]
+        [pipe.bitcount(self.getKey(timestamp, timeResolution)) for timestamp in timestamps]
         return zip(timestamps, pipe.execute())
 
 
@@ -155,8 +155,8 @@ class BitmapCounter(Rediston):
 
         dest = 'aggregate:%s:%s' % (self.metric, hash(timestamps))
         pipe = self._getPipeline()
-        pipe.execute_command('BITOP', bitop, dest, *(self.getKey(timestamp, timeResolution) for timestamp in timestamps))
-        pipe.execute_command('BITCOUNT', dest)
+        pipe.bitop(bitop, dest, *(self.getKey(timestamp, timeResolution) for timestamp in timestamps))
+        pipe.bitcount(dest)
         if expire:
             pipe.expire(dest, 60)
         rx = pipe.execute()
@@ -187,8 +187,8 @@ class BitmapCounter(Rediston):
             if filterBitmapKey:
                 bitmaps.append(filterBitmapKey)
 
-            conn.execute_command('BITOP', 'AND', dest, *bitmaps)
-            count = conn.execute_command('BITCOUNT', dest)
+            conn.bitop('AND', dest, *bitmaps)
+            count = conn.bitcount(dest)
 
             ret.append((ts, count))
             conn.expire(dest, 60)
@@ -212,10 +212,10 @@ class BitmapCounter(Rediston):
         #get the count for each timestamp
         for i in xrange(len(timestamps)):
             dest = 'funnel:%s:%s:%s' % (self.metric, timestamps[i], i)
-            conn.execute_command('BITOP', 'AND', dest, prev or filterBitmapKey or self.getKey(timestamps[0], timeResolution),
+            conn.bitop('AND', dest, prev or filterBitmapKey or self.getKey(timestamps[0], timeResolution),
                                  self.getKey(timestamps[i], timeResolution))
 
-            count = conn.execute_command('BITCOUNT', dest)
+            count = conn.bitcount(dest)
             prev = dest
             logging.info("Funnel for timestamp %s: %s", timestamps[i], count)
             ret.append((timestamps[i], count))
