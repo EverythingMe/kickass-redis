@@ -45,6 +45,7 @@ Indexes include: simple string index, numeric index that supports sorting and ra
 ```python
 from kickass_redis.patterns.object_store.objects import IndexedObject, KeySpec
 from kickass_redis.patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey
+from kickass_redis.patterns.object_store.condition import Condition
 
 class User(IndexedObject):
 
@@ -92,7 +93,7 @@ It makes use of new redis-2.6 commands BITCOUNT and BITOP, so it will not functi
 from kickass_redis.patterns.bitmap_counter import BitmapCounter
 
 #Daily unique users counter
-counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY))
+counter = BitmapCounter('unique_users', timeResolutions=(BitmapCounter.RES_DAY,))
 
 #sampling current user
 counter.add(3)
@@ -156,6 +157,12 @@ To optimize performance, it reserves in local memory many ids when accessing red
 ## redis_unit
 
 A unit-test like set of assertions about redis data to be used to validate the data inside a redis database.
+
+## requirements
+
+* redis-2.6 server(BITCOUNT/BITOP)
+* redis-py
+* [pyhash package](https://code.google.com/p/pyfasthash/)
 
 ###Example:
 
