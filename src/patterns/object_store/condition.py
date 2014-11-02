@@ -60,7 +60,7 @@ class Condition(object):
             self.min = min
             self.max = max
 
-    def __init__(self, fieldsAndValues, paging = None):
+    def __init__(self, fieldsAndValues, paging = None, order = 'ASC'):
         """
         @param fieldsAndValues a dictionary of fields and their requested values
         @param paging a tuple of (offset, num) to get
@@ -68,6 +68,7 @@ class Condition(object):
 
         self.fieldsAndValues = fieldsAndValues
         self.paging = paging
+        self.order = order if order in ('ASC', 'DESC') else 'ASC'
 
     def getValuesFor(self, *fields):
 

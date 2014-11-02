@@ -27,7 +27,7 @@
 __author__ = 'dvirsky'
 
 from kickass_redis.patterns.object_store.objects import IndexedObject, KeySpec
-from kickass_redis.patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey, UniqueKey, UniqueKeyDuplicateError
+from kickass_redis.patterns.object_store.indexing import UnorderedKey, OrderedNumericalKey, UniqueKey, UniqueKeyDuplicateError, OrderedCompoundKey
 from kickass_redis.patterns.object_store.condition import Condition
 
 import time
@@ -48,7 +48,8 @@ class User(IndexedObject):
     _keySpec = KeySpec(
         #UnorderedKey(prefix='users',fields=('name',)),
         OrderedNumericalKey(prefix='users', field='score'),
-        UniqueKey('users', ('name',))
+        #UniqueKey('users', ('name',))
+        OrderedCompoundKey('users', ('name',), orderField='score')
     )
 
     def __init__(self, **kwargs):
@@ -105,7 +106,7 @@ if __name__ == '__main__':
         for i in xrange(int(n)):
 
             uid = random.randint(1, 10000000)
-            user = User(email = 'user%s@domain.com' % uid, name = 'User %s' % uid)
+            user = User(email = 'user1@domain.com' % uid, name = 'User 1' % uid)
             user.setPassword('q1w2e3')
             user.save()
 
@@ -125,25 +126,29 @@ if __name__ == '__main__':
     total = 0
 
     uid = random.randint(1, 10000000)
-    user1 = User(email = 'user%s@domain.com' % uid, name = 'User %s' % uid)
+    user1 = User(email = 'user%s@domain.com' % uid, name = 'John')
     print "SAVE 1"
     user1.save()
     print "SAVE 2"
-    user2 = User(email = 'user%s@domain.com' % uid, name = 'User %s' % uid)
+    user2 = User(email = 'user%s@domain.com' % uid, name = 'John')
     print "SAVE 3"
     try:
         user2.save()
     except UniqueKeyDuplicateError:
         print "Duplicate caught! yay!"
 
-    u = User.get(Condition({'name': user1.name}))
-    print "found %s" % u
+    #u = User.get(Condition({'name': user1.name}))
+    #print "found %s" % u
 
-    print User.delete(Condition({'name': user1.name}))
+    #print User.delete(Condition({'name': user1.name}))
     u = User.get(Condition({'name': user1.name}))
     print "found %s" % u    
-    #creationRunner(100)
 
+    print User.get(Condition({'name': 'John'}, paging=(0,1), order='DESC'))
+    user2.score += 100
+    user2.save()
+    #creationRunner(100)
+    print User.get(Condition({'name': 'John'}, paging=(0,1), order='DESC'))
     #users = User.get(Condition({'score': Condition.Between(95, 100)}, paging= (0,1)))
     #print users
 #    for z in xrange(20):

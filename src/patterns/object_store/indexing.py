@@ -359,3 +359,68 @@ class UniqueKey(AbstractKey, Rediston):
         id = conn.hget(self.redisKey(), val)
         return [id] if id is not None else []
 
+
+
+
+class OrderedCompoundKey(AbstractKey, Rediston):
+    """
+    A simple catch all key, non unique, ideal for short texts (emails, etc). case sensitive.
+    it uses hashing of the value as a score in a sorted set
+    """
+    def __init__(self, prefix, fields, orderField):
+        '''
+        Constructor
+        '''
+        AbstractKey.__init__(self, prefix, fields)
+        Rediston.__init__(self)
+        self.orderField = orderField
+
+
+    def getValue(self, _dict):
+
+
+        vals = 'ck:%s/%s/%s' % (self.prefix, self.orderField, '::'.join(('%s=%s' % (f, _dict[f]) for f in self.fields)))
+
+        return vals
+
+    def update(self, obj, pipeline = None):
+        """
+        Update the key with the value of this object
+        """
+
+        redisKey = self.getValue(obj.__dict__)
+        score = getattr(obj, self.orderField)
+        conn = pipeline or self._getConnection('master')
+        conn.zadd(redisKey, **{str(obj.id): score})
+
+
+    def updateMany(self, ids, cls):
+
+        #first, get the values for these ids
+
+        objs = cls.loadObjects(ids, *(self.fields+ self.orderField))
+
+        #build a dictionary of all the values to be updated
+        updates = []
+        pipe = self._getPipeline('master')
+        for obj in objs:
+            if obj:
+                pipe.zadd( self.getValue(obj.__dict__), **{obj.id: getattr(obj, self.orderField)})
+
+        pipe.execute()
+
+
+    def find(self, condition):
+        """
+        find objects matching  a certian condition
+        currently the condition has to be exactly field=value. no multiple options and no ranges allowed
+        """
+        redisKey = self.getValue(condition.fieldsAndValues)
+        conn = self._getConnection()
+        if (condition.order == 'ASC'):
+            return conn.zrevrange(redisKey, 0 if not condition.paging else condition.paging[0],
+                                     -1 if not condition.paging else condition.paging[0] + condition.paging[1] )
+        else:
+            return conn.zrevrange(redisKey, 
+                                     0 if not condition.paging else condition.paging[0],
+                                    -1 if not condition.paging else condition.paging[0] + condition.paging[1] )
