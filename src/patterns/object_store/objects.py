@@ -342,3 +342,19 @@ class IndexedObject(Rediston):
 
         logging.debug("Ids for %s: %s", condition, ids)
         return ids
+
+
+    @classmethod
+    def delete(cls, condition):
+        """
+        Delete multiple objects by condition
+        @return the number of objects deleted
+        """
+
+        ids = cls.find(condition)
+
+        if ids:
+            conn = cls._getConnection('master')
+            conn.delete(*[cls.__key(id) for id in ids])
+        
+        return len(ids) if ids else 0

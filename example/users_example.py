@@ -138,6 +138,10 @@ if __name__ == '__main__':
 
     u = User.get(Condition({'name': user1.name}))
     print "found %s" % u
+
+    print User.delete(Condition({'name': user1.name}))
+    u = User.get(Condition({'name': user1.name}))
+    print "found %s" % u    
     #creationRunner(100)
 
     #users = User.get(Condition({'score': Condition.Between(95, 100)}, paging= (0,1)))
