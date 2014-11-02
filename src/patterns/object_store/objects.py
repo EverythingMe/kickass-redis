@@ -173,6 +173,10 @@ class IndexedObject(Rediston):
         objs = []
         for idx,r in enumerate(ret):
             if r:
+                if fields:
+                    # converting to dict since hmget returns lists
+                    r = dict(zip(fields, r))
+
                 r['id'] = ids[idx]
                 obj = cls( **r)
                 objs.append(obj)
