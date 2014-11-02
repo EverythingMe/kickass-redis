@@ -192,7 +192,7 @@ class IndexedObject(Rediston):
         """
         Get all the objects of a given type, with optional paging
         """
-        redisConn = self._getConnection()
+        redisConn = cls._getConnection()
         ids = redisConn.zrange(cls.__classKey(), first, num)
         return cls.loadObjects(ids, redisConn, *fields)
 
@@ -299,12 +299,12 @@ class IndexedObject(Rediston):
         return [(id, newVals[idx]) for idx, id in enumerate(ids)]
 
     @classmethod
-    def updateWhere(condition, **keyValues):
+    def updateWhere(cls, condition, **keyValues):
         """
         Update fields with new values for objects matching a condition
         """
         ids = cls.find(condition)
-        pipe = self._getPipeline('master')
+        pipe = cls._getPipeline('master')
         #update the database
         for id in ids:
             pipe.hmset(cls.__key(id), keyValues)
@@ -313,7 +313,7 @@ class IndexedObject(Rediston):
         res = pipe.execute()
 
         #udpate the keys
-        updateAbleKeys = self.__keySpec.findKeysForUpdate(keyValues.iterkeys())
+        updateAbleKeys = cls.__keySpec.findKeysForUpdate(keyValues.iterkeys())
         for key in updateAbleKeys:
             key.updateMany(((id, keyValues) for ids in ids))
 
